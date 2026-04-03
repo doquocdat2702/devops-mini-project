@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DevOps Todo App</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #1e293b;
+      border-bottom: 1px solid #334155;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    header h1 { font-size: 20px; font-weight: 600; color: #a78bfa; }
+    header span { font-size: 13px; color: #64748b; }
+
+    .container { max-width: 720px; margin: 32px auto; padding: 0 20px; }
+
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .card h2 { font-size: 15px; font-weight: 600; color: #94a3b8; margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    /* Form */
+    .form-row { display: flex; gap: 10px; }
+    .form-row input {
+      flex: 1;
+      padding: 10px 14px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      color: #e2e8f0;
+      font-size: 14px;
+      outline: none;
+    }
+    .form-row input:focus { border-color: #6d28d9; }
+    .form-row select {
+      padding: 10px 14px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      color: #e2e8f0;
+      font-size: 14px;
+      outline: none;
+      cursor: pointer;
+    }
+    .btn-add {
+      padding: 10px 20px;
+      background: #6d28d9;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+    .btn-add:hover { background: #7c3aed; }
+
+    /* Task list */
+    #taskList { display: flex; flex-direction: column; gap: 8px; min-height: 40px; }
+
+    .task-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      transition: border-color 0.2s;
+    }
+    .task-item:hover { border-color: #4f46e5; }
+    .task-item.done { opacity: 0.5; }
+    .task-item.done .task-title { text-decoration: line-through; }
+
+    .task-check {
+      width: 18px; height: 18px;
+      accent-color: #6d28d9;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .task-title { flex: 1; font-size: 14px; }
+
+    .badge {
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge.high   { background: #450a0a; color: #fca5a5; }
+    .badge.medium { background: #2d1d01; color: #fcd34d; }
+    .badge.low    { background: #052e16; color: #86efac; }
+
+    .btn-del {
+      background: none;
+      border: none;
+      color: #475569;
+      cursor: pointer;
+      font-size: 16px;
+      padding: 4px;
+      border-radius: 4px;
+      transition: color 0.2s;
+    }
+    .btn-del:hover { color: #ef4444; }
+
+    .empty { text-align: center; color: #475569; padding: 24px 0; font-size: 14px; }
+
+    /* Stats */
+    .stats { display: flex; gap: 12px; }
+    .stat-box {
+      flex: 1;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 14px;
+      text-align: center;
+    }
+    .stat-box .num { font-size: 28px; font-weight: 700; color: #a78bfa; }
+    .stat-box .lbl { font-size: 12px; color: #64748b; margin-top: 2px; }
+
+    /* About */
+    .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .about-row { background: #0f172a; border-radius: 8px; padding: 10px 14px; }
+    .about-row .key { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+    .about-row .val { font-size: 14px; color: #e2e8f0; margin-top: 2px; font-weight: 500; }
+
+    /* Health */
+    .health-indicator {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      background: #0f172a;
+      border-radius: 8px;
+    }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: #22c55e; }
+    .dot.error { background: #ef4444; }
+    .health-text { font-size: 14px; }
+
+    /* Loading */
+    .loading { text-align: center; color: #475569; padding: 20px; font-size: 13px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>📋 DevOps Todo App</h1>
+  <span id="headerStatus">Đang kết nối...</span>
+</header>
+
+<div class="container">
+
+  <!-- Stats -->
+  <div class="card">
+    <h2>Thống kê</h2>
+    <div class="stats">
+      <div class="stat-box"><div class="num" id="statTotal">0</div><div class="lbl">Tổng</div></div>
+      <div class="stat-box"><div class="num" id="statDone">0</div><div class="lbl">Hoàn thành</div></div>
+      <div class="stat-box"><div class="num" id="statLeft">0</div><div class="lbl">Còn lại</div></div>
+    </div>
+  </div>
+
+  <!-- Add task -->
+  <div class="card">
+    <h2>Thêm công việc mới</h2>
+    <div class="form-row">
+      <input id="taskInput" type="text" placeholder="Nhập tên công việc..." onkeydown="if(event.key==='Enter') addTask()" />
+      <select id="prioritySelect">
+        <option value="low">🟢 Thấp</option>
+        <option value="medium" selected>🟡 Trung bình</option>
+        <option value="high">🔴 Cao</option>
+      </select>
+      <button class="btn-add" onclick="addTask()">+ Thêm</button>
+    </div>
+  </div>
+
+  <!-- Task list -->
+  <div class="card">
+    <h2>Danh sách công việc</h2>
+    <div id="taskList"><div class="loading">Đang tải...</div></div>
+  </div>
+
+  <!-- About -->
+  <div class="card" id="aboutCard">
+    <h2>Thông tin sinh viên</h2>
+    <div class="loading">Đang tải...</div>
+  </div>
+
+  <!-- Health -->
+  <div class="card">
+    <h2>Health Check</h2>
+    <div class="health-indicator">
+      <div class="dot" id="healthDot"></div>
+      <span class="health-text" id="healthText">Đang kiểm tra...</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const API = (window.ENV_API_URL || 'http://localhost:3001');
+
+  async function loadTasks() {
+    try {
+      const res = await fetch(`${API}/tasks`);
+      const tasks = await res.json();
+      renderTasks(tasks);
+      updateStats(tasks);
+    } catch (e) {
+      document.getElementById('taskList').innerHTML = '<div class="empty">⚠️ Không kết nối được backend</div>';
+    }
+  }
+
+  function renderTasks(tasks) {
+    const el = document.getElementById('taskList');
+    if (!tasks.length) {
+      el.innerHTML = '<div class="empty">Chưa có công việc nào. Hãy thêm mới!</div>';
+      return;
+    }
+    el.innerHTML = tasks.map(t => `
+      <div class="task-item ${t.done ? 'done' : ''}" id="task-${t.id}">
+        <input class="task-check" type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTask(${t.id}, this.checked)" />
+        <span class="task-title">${escapeHtml(t.title)}</span>
+        <span class="badge ${t.priority}">${t.priority === 'high' ? 'Cao' : t.priority === 'medium' ? 'TB' : 'Thấp'}</span>
+        <button class="btn-del" onclick="deleteTask(${t.id})" title="Xóa">✕</button>
+      </div>
+    `).join('');
+  }
+
+  function updateStats(tasks) {
+    const done = tasks.filter(t => t.done).length;
+    document.getElementById('statTotal').textContent = tasks.length;
+    document.getElementById('statDone').textContent = done;
+    document.getElementById('statLeft').textContent = tasks.length - done;
+  }
+
+  async function addTask() {
+    const input = document.getElementById('taskInput');
+    const priority = document.getElementById('prioritySelect').value;
+    const title = input.value.trim();
+    if (!title) return;
+    try {
+      await fetch(`${API}/tasks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, priority })
+      });
+      input.value = '';
+      loadTasks();
+    } catch (e) {
+      alert('Lỗi kết nối backend!');
+    }
+  }
+
+  async function toggleTask(id, done) {
+    try {
+      await fetch(`${API}/tasks/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ done })
+      });
+      loadTasks();
+    } catch (e) {}
+  }
+
+  async function deleteTask(id) {
+    if (!confirm('Xóa công việc này?')) return;
+    try {
+      await fetch(`${API}/tasks/${id}`, { method: 'DELETE' });
+      loadTasks();
+    } catch (e) {}
+  }
+
+  async function loadAbout() {
+    try {
+      const res = await fetch(`${API}/about`);
+      const data = await res.json();
+      document.getElementById('aboutCard').innerHTML = `
+        <h2>Thông tin sinh viên</h2>
+        <div class="about-grid">
+          <div class="about-row"><div class="key">Họ tên</div><div class="val">${data.name}</div></div>
+          <div class="about-row"><div class="key">MSSV</div><div class="val">${data.student_id}</div></div>
+          <div class="about-row"><div class="key">Lớp</div><div class="val">${data.class}</div></div>
+          <div class="about-row"><div class="key">Ứng dụng</div><div class="val">${data.app}</div></div>
+        </div>
+      `;
+    } catch (e) {
+      document.getElementById('aboutCard').innerHTML = '<div class="card"><h2>Thông tin sinh viên</h2><div class="empty">⚠️ Không tải được</div></div>';
+    }
+  }
+
+  async function checkHealth() {
+    try {
+      const res = await fetch(`${API}/health`);
+      const data = await res.json();
+      document.getElementById('healthDot').className = 'dot';
+      document.getElementById('healthText').textContent = `status: "${data.status}" — ${data.app} — ${data.timestamp}`;
+      document.getElementById('headerStatus').textContent = '🟢 Online';
+    } catch (e) {
+      document.getElementById('healthDot').className = 'dot error';
+      document.getElementById('healthText').textContent = 'Backend không phản hồi';
+      document.getElementById('headerStatus').textContent = '🔴 Offline';
+    }
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  loadTasks();
+  loadAbout();
+  checkHealth();
+</script>
+</body>
+</html>
